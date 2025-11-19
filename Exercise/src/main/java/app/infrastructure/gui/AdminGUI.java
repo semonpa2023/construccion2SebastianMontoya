@@ -79,8 +79,12 @@ public class AdminGUI {
         }
         StringBuilder sb = new StringBuilder("Lista de administradores:\n");
         for (Admin a : admins) {
-            sb.append("- ").append(a.getFullName())
-              .append(" (").append(a.getUsername()).append(")\n");
+            sb.append(a.getId())
+              .append(" - ")
+              .append(a.getFullName())
+              .append(" (")
+              .append(a.getUsername())
+              .append(")\n");
         }
         JOptionPane.showMessageDialog(null, sb.toString());
     }

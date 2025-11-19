@@ -4,6 +4,12 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 /**
  * Entidad que representa a un usuario del sistema.
@@ -12,7 +18,7 @@ import java.time.Period;
  */
 @Entity
 @Table(name = "users")
-public class User {
+public class User implements UserDetails{
 
     // Identificador único autogenerado
     @Id
@@ -100,4 +106,35 @@ public class User {
         int age = Period.between(birthDate, LocalDate.now()).getYears();
         return age > 0 && age <= 150;
     }
+    
+    // ===================== UserDetails =====================
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (role == null || role.isBlank()) {
+            return List.of();
+        }
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
 }

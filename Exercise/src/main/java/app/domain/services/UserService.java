@@ -6,6 +6,7 @@ import app.infrastructure.util.ValidatorUtil;
 import jakarta.validation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +21,9 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private final Validator validator;
 
     public UserService() {
@@ -27,13 +31,14 @@ public class UserService {
         this.validator = factory.getValidator();
     }
 
-    // ----------------- CREAR USUARIO -----------------
+   // ----------------- CREAR USUARIO -----------------
     public String saveUser(User user) {
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         if (!violations.isEmpty()) {
             StringBuilder sb = new StringBuilder();
-            for (ConstraintViolation<User> v : violations)
+            for (ConstraintViolation<User> v : violations) {
                 sb.append("- ").append(v.getMessage()).append("\n");
+            }
             return sb.toString();
         }
 
@@ -45,6 +50,15 @@ public class UserService {
         if (userRepository.existsByUsername(user.getUsername())) return "El usuario ya existe.";
         if (userRepository.existsByEmail(user.getEmail())) return "El correo ya está registrado.";
         if (userRepository.findByDocumentNumber(user.getDocumentNumber()).isPresent()) return "La cédula ya existe.";
+
+        // DEBUG 1: ver contraseña en texto plano
+        System.out.println("Password ANTES de encriptar: " + user.getPassword());
+
+        // 🔐 Encriptar
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        // DEBUG 2: ver contraseña encriptada
+        System.out.println("Password DESPUÉS de encriptar: " + user.getPassword());
 
         userRepository.save(user);
         return "✅ Usuario guardado correctamente.";
@@ -69,7 +83,11 @@ public class UserService {
         if (!ValidatorUtil.isValidPhone(user.getPhone())) return "Teléfono inválido.";
         if (!user.isAgeValid()) return "Edad no válida (máximo 150 años).";
 
-        // Guardar cambios
+        // Si viene una nueva contraseña en texto plano, encriptarla
+        if (user.getPassword() != null && !user.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+
         userRepository.save(user);
         return "✅ Usuario actualizado correctamente.";
     }
